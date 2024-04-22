@@ -38,4 +38,14 @@ class StudentValidation extends Model
     {
         return $this->hasMany(StudentValidationsPortfolio::class, 'user_id', 'user_id');
     }
+
+    public function expertise()
+    {
+        return $this->belongsTo(Expertise::class, 'area_of_expertise');
+    }
+
+    public function yearLevel()
+    {
+        return $this->belongsTo(YearLevel::class, 'year_level');
+    }
 }

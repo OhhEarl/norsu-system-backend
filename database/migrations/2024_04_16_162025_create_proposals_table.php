@@ -14,14 +14,14 @@ return new class extends Migration
         Schema::create('proposals', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('project_id')->nullable();
-
             $table->unsignedBigInteger('freelancer_id')->nullable();
             $table->unsignedBigInteger('user_id')->nullable();
-
-            $table->string('name')->nullable();
-            $table->text('description')->nullable();
-            $table->boolean('status')->default(0);
+            $table->string('job_title')->nullable();
+            $table->text('expertise_explain')->nullable();
             $table->date('due_date')->nullable();
+            $table->string('job_amount_bid')->nullable();
+            $table->boolean('status')->default(0);
+
             $table->timestamps();
 
 

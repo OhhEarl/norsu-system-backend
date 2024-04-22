@@ -30,15 +30,15 @@ class CreateJob extends Model
 
     public function job_tags()
     {
-        return $this->hasMany(JobTag::class);
-    }
-    public function job_proposals()
-    {
-        return $this->hasMany(JobProposal::class);
+        return $this->hasMany(JobTag::class, 'create_job_id');
     }
 
     public function job_category()
     {
         return $this->belongsTo(JobCategory::class, 'job_category_id');
+    }
+    public function proposals()
+    {
+        return $this->hasMany(Proposal::class, 'project_id');
     }
 }

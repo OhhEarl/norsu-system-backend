@@ -13,14 +13,20 @@ class Proposal extends Model
         'project_id',
         'user_id',
         'freelancer_id',
-        'name',
-        'description',
+        'job_title',
+        'expertise_explain',
+        'job_amount_bid',
         'status',
         'due_date',
     ];
 
     public function jobProposal()
     {
-        return $this->belongsTo(CreateJob::class);
+        return $this->belongsTo(CreateJob::class, 'project_id');
+    }
+
+    public function freelancer()
+    {
+        return $this->belongsTo(StudentValidation::class);
     }
 }

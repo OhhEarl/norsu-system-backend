@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id')->nullable();
             $table->string('student_skills')->nullable();
             $table->timestamps();
-            $table->foreign('user_id')->references('id')->on('users')
+            $table->foreign('user_id')->references('user_id')->on('student_validations')
                 ->onUpdate('cascade')
                 ->onDelete('cascade');
         });

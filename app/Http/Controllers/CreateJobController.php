@@ -6,6 +6,7 @@ use App\Models\CreateJob;
 use App\Models\JobAttachment;
 use App\Models\JobTag;
 use App\Models\ProjectAttachment;
+use App\Models\Proposal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -22,7 +23,7 @@ class CreateJobController extends Controller
                 'job_title' => 'required|string',
                 'job_category_id' => 'required|exists:job_categories,id',
                 'job_tags' => 'required|array',
-                'job_tags.*' => 'required|string',
+                'job_tags.*' => 'nullable',
                 'job_description' => 'required|string',
                 'job_start_date' => 'required|date',
                 'job_end_date' => 'required|date',
@@ -60,13 +61,17 @@ class CreateJobController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // User is authenticated, proceed to fetch jobs with related category name
-        $jobs = CreateJob::with(['attachments', 'job_tags', 'job_category'])->get()->map(function ($job) {
-            $job->category_name = $job->job_category->value; // Assuming 'name' is the column that contains the category name
-            unset($job->job_category_id, $job->job_category); // Remove the ID and the related object
+        // User is authenticated, proceed to fetch jobs with related category name and count of proposals
+        $jobs = CreateJob::where('job_finished', 0)
+            ->with(['attachments', 'job_tags', 'job_category'])
+            ->withCount('proposals')  // Count the number of proposals
+            ->get()
+            ->map(function ($job) {
+                $job->category_name = $job->job_category->value; // Assuming 'name' is the column that contains the category name
+                unset($job->job_category_id, $job->job_category); // Remove the ID and the related object
 
-            return $job;
-        });
+                return $job;
+            });
 
         // Return the jobs as JSON response
         return response()->json(['jobs' => $jobs], 200);
@@ -75,7 +80,10 @@ class CreateJobController extends Controller
     public function show($userID)
     {
         try {
-            $jobCreated = CreateJob::with('job_category', 'attachments', 'job_tags')->where('student_user_id', $userID)->get();
+            $jobCreated = CreateJob::with('job_category', 'attachments', 'job_tags')->withCount('proposals')->where('student_user_id', $userID)->get()->map(function ($job) {
+                $job->category_name = $job->job_category->value; // Assuming 'name' is the column that contains the category name
+                return $job;
+            });;
             return response()->json([
                 'success' => true,
                 'data' => $jobCreated,
@@ -88,13 +96,14 @@ class CreateJobController extends Controller
 
     public function update(Request $request, $id)
     {
+        Log::info($id);
         try {
             $validatedData = $request->validate([
                 'student_user_id' => 'required|exists:student_validations,id',
                 'job_title' => 'required|string',
                 'job_category_id' => 'required|exists:job_categories,id',
                 'job_tags' => 'required|array',
-                'job_tags.*' => 'required|string',
+                'job_tags.*' => 'nullable',
                 'job_description' => 'required|string',
                 'job_start_date' => 'required|date',
                 'job_end_date' => 'required|date',
@@ -163,6 +172,59 @@ class CreateJobController extends Controller
                 $attachment = new JobAttachment(['file_path' => $attachmentPath, 'original_name' => $originalName]);
                 $job->attachments()->save($attachment);
             }
+        }
+    }
+
+    public function fetchJobCompleted($studentUserId)
+    {
+
+        Log::info($studentUserId);
+        if (!Auth::check()) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        // User is authenticated, proceed to fetch jobs with related category name
+        $jobs = CreateJob::where('student_user_id', $studentUserId)->where('job_finished', 1)->with(['attachments', 'job_tags', 'job_category'])->get()->map(function ($job) {
+            $job->category_name = $job->job_category->value; // Assuming 'name' is the column that contains the category name
+            unset($job->job_category_id, $job->job_category); // Remove the ID and the related object
+
+            return $job;
+        });
+
+        // Return the jobs as JSON response
+        return response()->json(['jobs' => $jobs], 200);
+    }
+
+    public function delete($id)
+    {
+
+
+        try {
+            // Find the project by ID
+            $project = CreateJob::findOrFail($id);
+
+            // Delete attachments related to the project
+            JobAttachment::where('create_job_id', $id)->delete();
+
+            // Delete tags related to the project
+            JobTag::where('create_job_id', $id)->delete();
+
+            // Delete proposals related to the project
+            Proposal::where('project_id', $id)->delete();
+
+            // Delete the project
+            $project->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Project deleted successfully.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting project.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 }

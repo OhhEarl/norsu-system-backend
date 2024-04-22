@@ -13,4 +13,9 @@ class JobTag extends Model
         'create_job_id',
         'job_tags',
     ];
+
+    public function jobTag()
+    {
+        return $this->belongsTo(CreateJob::class, 'id');
+    }
 }
