@@ -41,7 +41,7 @@ class StudentValidation extends Model
 
     public function expertise()
     {
-        return $this->belongsTo(Expertise::class, 'area_of_expertise');
+        return $this->belongsTo(Expertise::class);
     }
 
     public function yearLevel()

@@ -120,7 +120,7 @@ class StudentController extends Controller
             'firstName' => 'required|string|max:255',
             'lastName' => 'required|string|max:255',
             'course' => 'required|string|max:255',
-            'areaOfExpertise' => 'required|string|max:255',
+            'areaOfExpertise' => 'required|max:255',
             'norsuIDnumber' => 'required|string|max:255',
             'yearLevel' => 'required|int|max:255',
             'user_id' => 'required',
@@ -138,17 +138,25 @@ class StudentController extends Controller
             $imageBack = $request->file('imageBack')->store('storage/images');
 
             $areaOfExpertise = trim($request->input('areaOfExpertise'));
-            $expertise = Expertise::where('expertise', $areaOfExpertise)->first();
 
-            if ($expertise) {
-                $areaOfExpertiseId = $expertise->id;
+            // Check if the areaOfExpertise is a number (id) or a string (expertise)
+            if (is_numeric($areaOfExpertise)) {
+                $areaOfExpertiseId = $areaOfExpertise;
+                $expertise = Expertise::find($areaOfExpertiseId);
             } else {
-                // If the area of expertise doesn't exist, create a new one
-                $newExpertise = Expertise::create([
-                    'expertise' => $areaOfExpertise,
-                ]);
 
-                $areaOfExpertiseId = $newExpertise->id;
+                $expertise = Expertise::where('expertise', $areaOfExpertise)->first();
+
+                if ($expertise) {
+                    $areaOfExpertiseId = $expertise->id;
+                } else {
+                    // If the expertise does not exist, create a new expertise and use its id
+                    $newExpertise = Expertise::create([
+                        'expertise' => $areaOfExpertise,
+                    ]);
+
+                    $areaOfExpertiseId = $newExpertise->id;
+                }
             }
 
 
@@ -194,38 +202,43 @@ class StudentController extends Controller
     public function studentValidationUpdate(Request $request)
     {
 
-        Log::info($request);
         $request->validate([
-            'student_user_id' => 'required',
+            'user_id' => 'required',
             'user_name' => 'required|string|max:255',
-            'area_of_expertise' => 'required|string|max:255',
+            'areaOfExpertise' => 'required',
             'about_me' => 'nullable|string|max:255',
             'student_skills.*' => 'required|string|max:255',
             'user_avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
 
         ]);
 
-        $studentValidation = StudentValidation::where('user_id', $request->student_user_id)->first();
+        $studentValidation = StudentValidation::where('user_id', $request->user_id)->first();
 
         if (!$studentValidation) {
             return response()->json(['message' => 'Student validation not found'], 404);
         }
 
+        $areaOfExpertise = trim($request->input('areaOfExpertise'));
 
-        $areaOfExpertise = trim($request->input('area_of_expertise'));
-        $expertise = Expertise::where('expertise', $areaOfExpertise)->first();
-
-        if ($expertise) {
-            $areaOfExpertiseId = $expertise->id;
+        if (is_numeric($areaOfExpertise)) {
+            // If areaOfExpertise is a number (id), use it directly
+            $areaOfExpertiseId = $areaOfExpertise;
+            $expertise = Expertise::find($areaOfExpertiseId);
         } else {
-            // If the area of expertise doesn't exist, create a new one
-            $newExpertise = Expertise::create([
-                'expertise' => $areaOfExpertise,
-            ]);
+            // If areaOfExpertise is a string (expertise), look it up by expertise field
+            $expertise = Expertise::where('expertise', $areaOfExpertise)->first();
 
-            $areaOfExpertiseId = $newExpertise->id;
+            if ($expertise) {
+                $areaOfExpertiseId = $expertise->id;
+            } else {
+                // If the expertise does not exist, create a new expertise and use its id
+                $newExpertise = Expertise::create([
+                    'expertise' => $areaOfExpertise,
+                ]);
+
+                $areaOfExpertiseId = $newExpertise->id;
+            }
         }
-
         $studentValidation->user_name = $request->user_name;
         $studentValidation->area_of_expertise = $areaOfExpertiseId;
         $studentValidation->about_me = $request->about_me;
@@ -316,7 +329,7 @@ class StudentController extends Controller
 
         $studentValidation = StudentValidation::where('user_id', $request->user()->id)->first();
         $expertise = Expertise::find($studentValidation->area_of_expertise);
-        $areaOfExpertise = $expertise ? $expertise->expertise : null;
+        $areaOfExpertise = $expertise->expertise;
         $skills = $studentValidation->studentSkills->pluck('student_skills')->toArray();
         $avatarUrl = url("{$studentValidation->user_avatar}");
         $token = $request->bearerToken();

@@ -1,12 +1,15 @@
 <?php
 
 use App\Http\Controllers\CreateJobController;
+use App\Http\Controllers\ExpertiseController;
 use App\Http\Controllers\JobCategoryController;
 use App\Http\Controllers\ProposalController;
 use App\Http\Controllers\RegisterController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StudentController;
+
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -50,3 +53,4 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::post('google-callback/auth/google-login', [RegisterController::class, 'googleCallback']);
 Route::post('email-password/auth/login', [StudentController::class, 'loginEmailPassword']);
 Route::post('email-password/auth/register', [StudentController::class, 'registerEmailPassword']);
+route::get('student-validations/expertise', [ExpertiseController::class, 'index']);

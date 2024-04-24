@@ -65,6 +65,7 @@ class CreateJobController extends Controller
         $jobs = CreateJob::where('job_finished', 0)
             ->with(['attachments', 'job_tags', 'job_category'])
             ->withCount('proposals')  // Count the number of proposals
+            ->orderBy('updated_at', 'desc')  // Sort by updated_at in descending order
             ->get()
             ->map(function ($job) {
                 $job->category_name = $job->job_category->value; // Assuming 'name' is the column that contains the category name
@@ -76,6 +77,7 @@ class CreateJobController extends Controller
         // Return the jobs as JSON response
         return response()->json(['jobs' => $jobs], 200);
     }
+
 
     public function show($userID)
     {
