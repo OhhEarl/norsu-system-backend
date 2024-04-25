@@ -24,15 +24,13 @@ return new class extends Migration
             $table->string('front_id')->nullable();
             $table->string('back_id')->nullable();
             $table->longText('about_me')->nullable();
-            $table->string('user_avatar')->default('storage/DefaultAvatar.png');
+            $table->string('user_avatar')->default('storage/avatar/defaultAvatar.jpg');
             $table->boolean('is_student')->default(0);
             $table->timestamps();
-
 
             $table->foreign('user_id')->references('id')->on('users')
                 ->onUpdate('cascade')
                 ->onDelete('cascade');
-
 
             $table->foreign('area_of_expertise')->references('id')->on('expertises')
                 ->onUpdate('cascade')

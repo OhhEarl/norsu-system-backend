@@ -41,36 +41,45 @@
 												<p class="text-xs font-weight-bold mb-0">{{ $student->first_name . ' ' . $student->last_name }}</p>
 											</td>
 											<td class="text-center">
-												<p class="text-xs font-weight-bold mb-0">{{$student->user->email  }}</p>
+												<p class="text-xs font-weight-bold mb-0">{{ $student->user->email }}</p>
 											</td>
 
 											<td class="text-center">
 												<p class="text-xs font-weight-bold mb-0">{{ $student->course }}</p>
 											</td>
 											<td class="text-center">
-												<a data-target="#imageModal{{ $student->id }}" data-toggle="modal"
-													href="{{ asset('storage/images/' . basename($student->front_id)) }}">
-													<img alt="Front ID Image" src="{{ asset('storage/images/' . basename($student->front_id)) }}"
-														width="100">
+												<a data-target="#imageModal{{ $student->id }}" data-toggle="modal" href="{{ asset($student->front_id) }}">
+													<img alt="Front ID Image" src="{{ asset($student->front_id) }}" width="100">
 												</a>
 											</td>
 											<td class="text-center">
-												<a data-target="#imageModal{{ $student->id }}" data-toggle="modal"
-													href="{{ asset('storage/images/' . basename($student->back_id)) }}">
-													<img alt="Front ID Image" src="{{ asset('storage/images/' . basename($student->back_id)) }}" width="100">
+												<a data-target="#imageModal{{ $student->id }}" data-toggle="modal" href="{{ asset($student->back_id) }}">
+													<img alt="Front ID Image" src="{{ asset($student->back_id) }}" width="100">
 												</a>
 											</td>
 											<td class="text-center">
 												<span class="text-secondary text-xs font-weight-bold">{{ $student->created_at->format('F j, Y') }}</span>
 											</td>
-											<td class="e text-center">
-												<form action="{{ route('user-management.accept', $student->id) }}" id="accept-form" method="PoST" style="display: inline;">
-													@csrf
-													<button type="submit" class="badge badge-sm bg-gradient-success" onclick="return confirm('Are you sure you want to approve this user?')">Accept</button>
-												</form>
 
 
+											<td class="text-center">
+												<span class="text-secondary text-xs font-weight-bold">{{ $student->created_at->format('F j, Y') }}</span>
 											</td>
+
+											@if ($student->is_student == 0)
+												<td class="e text-center">
+													<form action="{{ route('user-management.accept', $student->id) }}" id="accept-form" method="POST"
+														style="display: inline;">
+														@csrf
+														<button class="badge badge-sm bg-gradient-success"
+															onclick="return confirm('Are you sure you want to approve this user?')" type="submit">Accept</button>
+													</form>
+												</td>
+											@elseif ($student->is_student == 1)
+												<td class="text-center">
+													<span class="text-success text-xs font-weight-bold">ACCEPTED</span>
+												</td>
+											@endif
 
 										</tr>
 									@endforeach

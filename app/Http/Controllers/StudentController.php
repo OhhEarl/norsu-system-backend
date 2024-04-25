@@ -159,9 +159,6 @@ class StudentController extends Controller
                 }
             }
 
-
-
-
             $data = [
                 'user_id' => $request->input('user_id'),
                 'first_name' => $request->input('firstName'),
@@ -202,10 +199,11 @@ class StudentController extends Controller
     public function studentValidationUpdate(Request $request)
     {
 
+
         $request->validate([
             'user_id' => 'required',
             'user_name' => 'required|string|max:255',
-            'areaOfExpertise' => 'required',
+            'area_of_expertise' => 'nullable',
             'about_me' => 'nullable|string|max:255',
             'student_skills.*' => 'required|string|max:255',
             'user_avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
@@ -218,27 +216,26 @@ class StudentController extends Controller
             return response()->json(['message' => 'Student validation not found'], 404);
         }
 
-        $areaOfExpertise = trim($request->input('areaOfExpertise'));
+        $areaOfExpertise = trim($request->input('area_of_expertise'));
 
         if (is_numeric($areaOfExpertise)) {
-            // If areaOfExpertise is a number (id), use it directly
             $areaOfExpertiseId = $areaOfExpertise;
             $expertise = Expertise::find($areaOfExpertiseId);
         } else {
-            // If areaOfExpertise is a string (expertise), look it up by expertise field
             $expertise = Expertise::where('expertise', $areaOfExpertise)->first();
-
-            if ($expertise) {
-                $areaOfExpertiseId = $expertise->id;
-            } else {
-                // If the expertise does not exist, create a new expertise and use its id
-                $newExpertise = Expertise::create([
-                    'expertise' => $areaOfExpertise,
-                ]);
-
-                $areaOfExpertiseId = $newExpertise->id;
-            }
         }
+
+        if ($expertise) {
+            $areaOfExpertiseId = $expertise->id;
+        } else {
+            $newExpertise = Expertise::create([
+                'expertise' => $areaOfExpertise,
+            ]);
+            $areaOfExpertiseId = $newExpertise->id;
+        }
+
+
+
         $studentValidation->user_name = $request->user_name;
         $studentValidation->area_of_expertise = $areaOfExpertiseId;
         $studentValidation->about_me = $request->about_me;
@@ -255,25 +252,25 @@ class StudentController extends Controller
         }
 
 
+
         if ($request->hasFile('user_avatar')) {
+            Log::info($studentValidation->user_avatar);
             // Delete old avatar if it exists
             if ($studentValidation->user_avatar) {
-                // Remove 'storage/' prefix to get the relative path
                 $oldAvatarPath = str_replace('storage/', 'public/', $studentValidation->user_avatar);
-                // Delete the old avatar
                 Storage::delete($oldAvatarPath);
             }
             // Store new avatar
             $avatarPath = $request->file('user_avatar')->store('public/avatar');
-            // Update user_avatar field
+
             $studentValidation->user_avatar = str_replace('public/', 'storage/', $avatarPath);
             // Save the model
-            $studentValidation->save();
+
         }
 
+        $studentValidation->save();
         if ($request->hasFile('portfolio')) {
-
-            Log::info($request->hasFile('portfolio'));
+            $studentValidation->studentPortfolio()->delete();
             foreach ($request->file('portfolio') as $file) {
                 $path = $file->store('public/portfolio');
                 $portfolio = new StudentValidationsPortfolio([
